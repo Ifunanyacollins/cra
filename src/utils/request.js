@@ -1,23 +1,31 @@
 import axios from 'axios';
 import { useStore } from '../store';
+import { useEffect } from 'react';
+
+
 
 export const useRequest = () => {
     
-  const { token } = useStore
-
+  const { access_token } = useStore()
 
   const request = axios.create({
-    baseURL: '/api', 
+    baseURL: 'https://challenge-server.tracks.run/memoapp', 
     headers: {
       'Content-Type': 'application/json',
+      'x-access-token':  access_token
     },
   });
 
- 
-  apiClient.interceptors.request.use(
+
+  useEffect(() => {
+   
+    const requestIntercept = request.interceptors.request.use(
     (config) => {
-      if (token) {
-        config.headers['X-ACCESS-TOKEN'] = token; 
+  
+      if (access_token && !config.headers['x-access-token']) {  
+        config.headers = {
+          'x-access-token':  access_token
+        }
       }
       return config;
     },
@@ -28,7 +36,7 @@ export const useRequest = () => {
   );
 
  
-  apiClient.interceptors.response.use(
+  const responseIntercept = request.interceptors.response.use(
     (response) => response,
     (error) => {
       const { response } = error;
@@ -46,12 +54,13 @@ export const useRequest = () => {
           case 429: 
             console.warn('429 Too Many Requests:', data?.message || 'Rate limit exceeded.');
             return new Promise((resolve) => {
-              setTimeout(() => resolve(apiClient(error.config)), 3000); 
+              setTimeout(() => resolve(request(error.config)), 3000); 
             });
 
           default:
             console.error(`HTTP ${status}:`, data?.message || 'An error occurred.');
-            break;
+            return Promise.reject(error)
+          
         }
       } else {
         console.error('Network error:', error.message);
@@ -62,5 +71,11 @@ export const useRequest = () => {
     }
   );
 
+  return () => {
+    request.interceptors.request.eject(requestIntercept);
+    request.interceptors.response.eject(responseIntercept);
+  };
+
+  },[access_token])
   return request;
 };
