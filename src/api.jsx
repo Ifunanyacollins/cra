@@ -49,6 +49,26 @@ export const useGetMemo = (memoId) => {
 };
 
 
+
+export const useAddMemo = (categoryId) => {
+  const request = useRequest();  
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (values) =>
+      request
+        .post(`/memo`, values)
+        .then((res) => res.data)
+        .catch((error) => {
+          throw error.response.data;
+        }),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({
+              queryKey: ['get_memos', categoryId],
+            });
+          },
+  });
+};
+
 export const useUpdateMemo = (memoId) => {
   const request = useRequest();  
   const queryClient = useQueryClient();
@@ -63,6 +83,25 @@ export const useUpdateMemo = (memoId) => {
         onSuccess: async () => {
             await queryClient.invalidateQueries({
               queryKey: ['get_memo', memoId],
+            });
+          },
+  });
+};
+
+export const useDeleteMemo = (categoryId, memoId) => {
+  const request = useRequest();  
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (values) =>
+      request
+        .delete(`/memo/${memoId}`)
+        .then((res) => res.data)
+        .catch((error) => {
+          throw error.response.data;
+        }),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({
+              queryKey: ['get_memos', categoryId],
             });
           },
   });

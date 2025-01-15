@@ -21,7 +21,7 @@ export default function Login() {
   const [inputValue, setInputValue] = useState('')
   const [isValid, setIsValid] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
- const {isLoading} = useGetCategories(access_token)
+  const {isLoading} = useGetCategories(access_token)
   const validateInput = (value) => {
     const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
     return regex.test(value)
@@ -39,10 +39,14 @@ export default function Login() {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    setIsSubmitted(true)
     if (isValid) {
       update_access_token(inputValue)
       setInputValue('')
+
     }
+
+    setIsSubmitted(false)
   }
 
   return (
@@ -56,14 +60,14 @@ export default function Login() {
           isLoading ? 'bg-gray-100 text-gray-500' : ''
         }`}
         placeholder="Enter UUID"
-        disabled={isLoading}
+        disabled={isSubmitted || !isValid}
       />
       <button
         id="login"
         type="submit"
-        disabled={!isValid || isLoading}
+        disabled={!isValid || isSubmitted}
         className={`px-4 py-2 rounded ${
-          isValid && !isLoading
+          isValid || isSubmitted
             ? 'bg-blue-500 text-white hover:bg-blue-600'
             : 'bg-gray-300 text-gray-500 cursor-not-allowed'
         }`}

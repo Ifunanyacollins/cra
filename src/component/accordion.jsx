@@ -1,10 +1,10 @@
 import { ChevronDown } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { useGetMemos } from '../api';
+import { useAddMemo, useGetMemos } from '../api';
 import { useStore } from '../store';
 
 
-const AccordionItem = ({ name,  isOpen, onClick, id, update_memo }) => {
+const AccordionItem = ({ name,  isOpen, onClick, id, update_memo, deleteId }) => {
    const {data} =  useGetMemos(id, isOpen)
 
   
@@ -26,7 +26,7 @@ const AccordionItem = ({ name,  isOpen, onClick, id, update_memo }) => {
       </button>
 
       {isOpen &&
-        data?.map((memo) =>  <div
+        data?.filter((memo) => memo.id !== deleteId)?.map((memo) =>  <div
         onClick={() => update_memo(memo.id)}
         key={memo.id}
         id={`memo-${memo.id}`}
@@ -43,13 +43,25 @@ const AccordionItem = ({ name,  isOpen, onClick, id, update_memo }) => {
 };
 
 const Accordion = ({ items }) => {
-  
-  const {openIndex, setOpenIndex, update_memo} = useStore()
-
+ 
+  const {openIndex, setOpenIndex, update_memo, deleteId} = useStore()
+  const { mutateAsync: add_memo} =  useAddMemo(openIndex)
   const handleItemClick = (index) => {
     setOpenIndex(openIndex === index ? null : index);
   };
 
+  const handleAddMemo =  async () => {
+    const payload = {
+        title: "New memo",
+        content: "New memo",
+        category_id:  openIndex
+    }
+    try {
+        await add_memo(payload)
+    } catch (error) {
+        console.log('an error occurred')
+    }
+  }
   
   return (
     <div className="w-full max-w-md mx-auto bg-white shadow-md overflow-hidden">
@@ -58,12 +70,25 @@ const Accordion = ({ items }) => {
           key={item.id}
           name={item.name}
           content={item.content}
-          isOpen={openIndex === index}
-          onClick={() => handleItemClick(index)}
+          isOpen={openIndex === item.id}
+          onClick={() => handleItemClick(item.id)}
           id={item.id}
           update_memo={update_memo}
+          deleteId={deleteId}
         />
       ))}
+
+      <div className='my-5 px-3 flex justify-end'>
+      <button
+       onClick={handleAddMemo}
+        disabled={openIndex === null}
+        type="submit"
+        id="new-memo"
+        className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-500"
+      >
+        New
+      </button>
+      </div>
     </div>
   );
 };
